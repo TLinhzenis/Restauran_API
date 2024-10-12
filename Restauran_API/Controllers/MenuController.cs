@@ -2,9 +2,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Restauran_API.Models;
 using Restauran_API.SignalR;
-using static System.Net.Mime.MediaTypeNames;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Restauran_API.Controllers
 {
@@ -12,25 +15,30 @@ namespace Restauran_API.Controllers
     [ApiController]
     public class MenuController : ControllerBase
     {
-        QLNhaHangContext dbc;
+        private readonly QLNhaHangContext dbc;
         private readonly IHubContext<MenuItemHub> _hubContext;
-        public MenuController(QLNhaHangContext db, IHubContext<MenuItemHub> hubContext)
+        private readonly IHostEnvironment _hostEnvironment; // Thêm trường host environment
+
+        public MenuController(QLNhaHangContext db, IHubContext<MenuItemHub> hubContext, IHostEnvironment hostEnvironment)
         {
             dbc = db;
             _hubContext = hubContext;
+            _hostEnvironment = hostEnvironment; // Khởi tạo trường
         }
+
         [HttpGet]
         [Route("/Menu/List")]
         public IActionResult GetList()
         {
             return Ok(dbc.MenuItems.ToList());
         }
+
         [HttpPost]
         [Route("/Menu/Delete")]
         public IActionResult Xoa(int id)
         {
             var menuItem = dbc.MenuItems
-                              .Include(m => m.OrderItems) 
+                              .Include(m => m.OrderItems)
                               .FirstOrDefault(m => m.MenuItemId == id);
 
             if (menuItem == null)
@@ -38,13 +46,34 @@ namespace Restauran_API.Controllers
                 return NotFound();
             }
 
+            // Xóa hình ảnh liên quan
+            if (!string.IsNullOrEmpty(menuItem.Image)) // Kiểm tra xem có hình ảnh không
+            {
+                DeleteImage(menuItem.Image);
+            }
+
             dbc.OrderItems.RemoveRange(menuItem.OrderItems);
-
             dbc.MenuItems.Remove(menuItem);
-
             dbc.SaveChanges();
 
             return Ok(dbc.MenuItems.ToList());
+        }
+
+        private IActionResult DeleteImage(string imageName)
+        {
+            if (string.IsNullOrWhiteSpace(imageName))
+                return BadRequest("Tên hình ảnh không hợp lệ.");
+
+            var uploadsFolder = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot/uploads");
+            var filePath = Path.Combine(uploadsFolder, imageName);
+
+            // Kiểm tra xem file có tồn tại không
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("Hình ảnh không tồn tại.");
+
+            // Xóa file hình ảnh
+            System.IO.File.Delete(filePath);
+            return Ok("Hình ảnh đã được xóa thành công.");
         }
 
         [HttpPost]
@@ -68,7 +97,6 @@ namespace Restauran_API.Controllers
             return Ok(new { data = dbc.MenuItems.ToList() });
         }
 
-
         [HttpPut]
         [Route("/Menu/Update")]
         public IActionResult Sua([FromBody] MenuItem updatedMenuItem)
@@ -85,12 +113,13 @@ namespace Restauran_API.Controllers
             existingMenuItem.Price = updatedMenuItem.Price;
             existingMenuItem.Category = updatedMenuItem.Category;
             existingMenuItem.Description = updatedMenuItem.Description;
-            existingMenuItem.Image = updatedMenuItem.Image; // Giữ nguyên kiểu byte[]
+            existingMenuItem.Image = updatedMenuItem.Image;
 
             dbc.SaveChanges();
 
             return Ok(new { data = dbc.MenuItems.ToList() });
         }
+
         [HttpGet]
         [Route("/Menu/GetById")]
         public IActionResult GetById(int id)
@@ -103,8 +132,5 @@ namespace Restauran_API.Controllers
 
             return Ok(menuItem);
         }
-
-
-
     }
 }

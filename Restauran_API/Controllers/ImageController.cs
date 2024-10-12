@@ -44,5 +44,23 @@ namespace Restauran_API.Controllers
             var imagePaths = imageFiles.Select(file => $"/uploads/{file}").ToList();
             return Ok(imagePaths);
         }
+        [HttpPost("delete-image")]
+        public IActionResult DeleteImage(string imageName)
+        {
+            if (string.IsNullOrWhiteSpace(imageName))
+                return BadRequest("Tên hình ảnh không hợp lệ.");
+
+            var uploadsFolder = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot/uploads");
+            var filePath = Path.Combine(uploadsFolder, imageName);
+
+            // Kiểm tra xem file có tồn tại không
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("Hình ảnh không tồn tại.");
+
+            // Xóa file hình ảnh
+            System.IO.File.Delete(filePath);
+            return Ok("Hình ảnh đã được xóa thành công.");
+        }
+
     }
 }
