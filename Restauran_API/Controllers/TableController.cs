@@ -70,22 +70,35 @@ namespace Restauran_API.Controllers
 
         [HttpPut]
         [Route("/Table/Update")]
-        public IActionResult Sua(int TableId, string tableNumber, string status, int capacity, string username, string password)
+        public IActionResult Sua([FromBody] Table updateTable)
         {
-            var hh = dbc.Tables.FirstOrDefault(c => c.TableId == TableId);
-
-            if (hh == null)
+            var existingTable = dbc.Tables.FirstOrDefault(m => m.TableId == updateTable.TableId);
+            if (existingTable == null)
             {
-                return NotFound(new { message = "Không tìm thấy với TableId này." });
+                return BadRequest(new { message = "Table không tồn tại." });
             }
-                hh.TableNumber = tableNumber;
-                hh.Status = status;
-                hh.Capacity = capacity;
-                hh.Username = username;
-                hh.Password = password;
+
+            existingTable.TableNumber = updateTable.TableNumber;
+            existingTable.Capacity = updateTable.Capacity;
+            existingTable.Status = updateTable.Status;
+            existingTable.Username = updateTable.Username;
+            existingTable.Password = updateTable.Password;
+
             dbc.SaveChanges();
 
             return Ok(new { data = dbc.Tables.ToList() });
+        }
+        [HttpGet]
+        [Route("/Table/GetById")]
+        public IActionResult GetById(int id)
+        {
+            var vc = dbc.Tables.FirstOrDefault(m => m.TableId == id);
+            if (vc == null)
+            {
+                return NotFound(new { message = "Không tìm thấy với TableId này." });
+            }
+
+            return Ok(vc);
         }
     }
 }
