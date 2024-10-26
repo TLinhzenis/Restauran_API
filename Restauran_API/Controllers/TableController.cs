@@ -88,6 +88,24 @@ namespace Restauran_API.Controllers
 
             return Ok(new { data = dbc.Tables.ToList() });
         }
+
+        [HttpPut]
+        [Route("/Table/UpdateStatus")]
+        public IActionResult Sua( int tableID, string status)
+        {
+            var existingTable = dbc.Tables.FirstOrDefault(m => m.TableId == tableID);
+            if (existingTable == null)
+            {
+                return BadRequest(new { message = "Table không tồn tại." });
+            }
+
+            existingTable.Status = status;
+
+
+            dbc.SaveChanges();
+
+            return Ok(existingTable);
+        }
         [HttpGet]
         [Route("/Table/GetById")]
         public IActionResult GetById(int id)

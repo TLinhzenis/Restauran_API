@@ -84,5 +84,22 @@ namespace Restauran_API.Controllers
 
             return Ok(hh);  // Return the updated order
         }
+        [HttpGet]
+        [Route("/Order/GetById")]
+        public IActionResult GetById(int tableID)
+        {
+            // Lấy danh sách các Order dựa trên TableId
+            var orders = dbc.Orders.Where(m => m.TableId == tableID).ToList();
+
+            // Kiểm tra nếu không có đơn hàng nào thỏa mãn
+            if (orders == null || orders.Count == 0)
+            {
+                return NotFound(new { message = "Không tìm thấy đơn hàng nào với TableId này." });
+            }
+
+            // Trả về danh sách các Order
+            return Ok(orders);
+        }
+
     }
 }

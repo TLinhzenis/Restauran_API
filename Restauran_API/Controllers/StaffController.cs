@@ -72,5 +72,25 @@ namespace Restauran_API.Controllers
 
             return Ok(new { data = dbc.staff.ToList() });
         }
+        [HttpPost]
+        [Route("/staff/Login")]
+        public IActionResult DangNhap(string username, string password)
+        {
+            var staff = dbc.staff.FirstOrDefault(s => s.Username == username && s.Password == password);
+            if (staff == null)
+            {
+                return Unauthorized(new { message = "Sai tài khoản hoặc mật khẩu" });
+            }
+            return Ok(new
+            {
+                message = "Đăng nhập thành công",
+                staffId = staff.StaffId,
+                fullName = staff.FullName // Include FullName in the response
+            });
+        }
+
+
+
+
     }
 }
