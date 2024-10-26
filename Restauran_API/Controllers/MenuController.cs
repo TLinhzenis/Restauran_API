@@ -1,13 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
+using Restauran_API.DTO;
 using Restauran_API.Models;
 using Restauran_API.SignalR;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Restauran_API.Controllers
 {
@@ -131,6 +127,24 @@ namespace Restauran_API.Controllers
             }
 
             return Ok(menuItem);
+        }
+        [HttpGet]
+        [Route("/Menu/GetTop5OrderByQuantity")]
+        public async Task<ActionResult<List<MenuItemDTO>>> GetTop5OrderByQuantity()
+        {
+            var result = await dbc.OrderItems
+           .GroupBy(oi => new { oi.MenuItem.MenuItemId, oi.MenuItem.ItemName })
+           .Select(group => new MenuItemDTO
+           {
+               MenuItemID = group.Key.MenuItemId,
+               ItemName = group.Key.ItemName,
+               TotalQuantity = group.Sum(oi => oi.Quantity)
+           })
+           .OrderByDescending(dto => dto.TotalQuantity)
+           .Take(5)
+           .ToListAsync();
+
+            return Ok(result);
         }
     }
 }
