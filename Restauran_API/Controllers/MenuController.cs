@@ -133,12 +133,13 @@ namespace Restauran_API.Controllers
         public async Task<ActionResult<List<MenuItemDTO>>> GetTop5OrderByQuantity()
         {
             var result = await dbc.OrderItems
-           .GroupBy(oi => new { oi.MenuItem.MenuItemId, oi.MenuItem.ItemName })
+           .GroupBy(oi => new { oi.MenuItem.MenuItemId, oi.MenuItem.ItemName, oi.MenuItem.Image })
            .Select(group => new MenuItemDTO
            {
                MenuItemID = group.Key.MenuItemId,
                ItemName = group.Key.ItemName,
-               TotalQuantity = group.Sum(oi => oi.Quantity)
+               TotalQuantity = group.Sum(oi => oi.Quantity),
+               Image = group.Key.Image,
            })
            .OrderByDescending(dto => dto.TotalQuantity)
            .Take(5)
