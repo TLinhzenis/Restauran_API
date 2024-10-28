@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Restauran_API.Models;
 using System.Data;
 
 namespace Restauran_API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("controller")]
     [ApiController]
     public class StaffController : ControllerBase
     {
@@ -15,38 +16,45 @@ namespace Restauran_API.Controllers
             dbc = db;
         }
         [HttpGet]
-        [Route("/staff/List")]
+        [Route("/Staff/List")]
         public IActionResult GetList()
         {
             return Ok(dbc.staff.ToList());
         }
         [HttpPost]
-        [Route("/staff/Delete")]
-        public IActionResult Xoa(int id)
+        [Route("/Staff/Delete")]
+        public IActionResult DeleteStaff(int id)
         {
-            var vc = dbc.staff.FirstOrDefault(v => v.StaffId == id);
-            if (vc == null)
+            var staff = dbc.staff
+                          .Include(t => t.Shifts) // Bao gồm các ca làm việc liên quan
+                          .FirstOrDefault(t => t.StaffId == id);
+
+            if (staff == null)
             {
                 return NotFound();
             }
-            dbc.staff.Remove(vc);
-            dbc.SaveChanges();
-            return Ok(dbc.staff.ToList());
+            dbc.Shifts.RemoveRange(staff.Shifts);
+
+
+                // Cuối cùng, xóa nhân viên
+                dbc.staff.Remove(staff);
+                dbc.SaveChanges();
+
+                return Ok(dbc.staff.ToList());
         }
+
         [HttpPost]
-        [Route("/staff/Insert")]
-        public IActionResult Them(string username, string password, string name, string role)
+        [Route("/Staff/Insert")]
+        public IActionResult Them([FromBody] staff newStaff)
         {
-            staff hh = new staff
+            var existingStaff = dbc.staff.FirstOrDefault(m => m.StaffId == newStaff.StaffId);
+            if (existingStaff != null)
             {
-                Username = username,
-                Password = password,
-                FullName = name,
-                Role = role
+                // Trả về mã lỗi và thông báo rằng món ăn đã tồn tại
+                return BadRequest(new { message = "Nhân viên đã tồn tại." });
+            }
 
-            };
-
-            dbc.staff.Add(hh);
+            dbc.staff.Add(newStaff);
             dbc.SaveChanges();
 
             return Ok(new { data = dbc.staff.ToList() });
@@ -55,7 +63,7 @@ namespace Restauran_API.Controllers
 
 
         [HttpPut]
-        [Route("/staff/Update")]
+        [Route("/Staff/Update")]
         public IActionResult Sua(int staffId, string username, string password, string name, string role)
         {
             var hh = dbc.staff.FirstOrDefault(c => c.StaffId == staffId);
@@ -73,7 +81,7 @@ namespace Restauran_API.Controllers
             return Ok(new { data = dbc.staff.ToList() });
         }
         [HttpPost]
-        [Route("/staff/Login")]
+        [Route("/Staff/Login")]
         public IActionResult DangNhap(string username, string password)
         {
             var staff = dbc.staff.FirstOrDefault(s => s.Username == username && s.Password == password);
@@ -85,12 +93,29 @@ namespace Restauran_API.Controllers
             {
                 message = "Đăng nhập thành công",
                 staffId = staff.StaffId,
-                fullName = staff.FullName // Include FullName in the response
+                fullName = staff.FullName, // Include FullName in the response
+                role = staff.Role
             });
+        }
+        [HttpGet]
+        [Route("/Staff/GetById")]
+        public IActionResult GetById(int id)
+        {
+            var vc = dbc.staff.FirstOrDefault(m => m.StaffId == id);
+            if (vc == null)
+            {
+                return NotFound(new { message = "Không tìm thấy với StaffId này." });
+            }
+
+            return Ok(vc);
         }
 
 
-
-
     }
+
+
+
+
+
 }
+

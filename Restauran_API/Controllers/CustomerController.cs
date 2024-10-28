@@ -55,18 +55,21 @@ namespace Restauran_API.Controllers
         [Route("/Customer/Insert")]
         public IActionResult Them([FromBody] Customer newCustomer)
         {
-            var existingCustomer = dbc.Customers.FirstOrDefault(m => m.CustomerId == newCustomer.CustomerId);
+            var existingCustomer = dbc.Customers.FirstOrDefault(m => m.Username == newCustomer.Username);
             if (existingCustomer != null)
             {
-                // Trả về mã lỗi và thông báo rằng món ăn đã tồn tại
                 return BadRequest(new { message = "Tài khoản đã tồn tại." });
             }
+
+            newCustomer.Point = 0; // Thiết lập mặc định cho Point
+            newCustomer.DateJoined = DateTime.Now; // Thiết lập thời gian hiện tại
 
             dbc.Customers.Add(newCustomer);
             dbc.SaveChanges();
 
             return Ok(new { data = dbc.Customers.ToList() });
         }
+
 
 
 
@@ -103,6 +106,27 @@ namespace Restauran_API.Controllers
 
             return Ok(account);
         }
+        [HttpPost]
+        [Route("/Customer/Login")]
+        public IActionResult DangNhap(string username, string password)
+        {
+            var customer = dbc.Customers.FirstOrDefault(c => c.Username == username && c.Password == password);
+            if (customer == null)
+            {
+                return Unauthorized(new { message = "Sai tài khoản hoặc mật khẩu" });
+            }
+            return Ok(new
+            {
+                message = "Đăng nhập thành công",
+                customerId = customer.CustomerId,
+                fullName = customer.FullName,
+                email = customer.Email,
+                phoneNumber = customer.PhoneNumber,
+                dateJoined = customer.DateJoined,
+                point = customer.Point
+            });
+        }
+
 
     }
 }
