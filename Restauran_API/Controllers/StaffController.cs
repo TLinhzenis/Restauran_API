@@ -64,21 +64,23 @@ namespace Restauran_API.Controllers
 
         [HttpPut]
         [Route("/Staff/Update")]
-        public IActionResult Sua(int staffId, string username, string password, string name, string role)
+        public IActionResult Sua([FromBody] staff updateStaff)
         {
-            var hh = dbc.staff.FirstOrDefault(c => c.StaffId == staffId);
-
-            if (hh == null)
+            var existingStaff = dbc.staff.FirstOrDefault(m => m.StaffId == updateStaff.StaffId);
+            if (existingStaff == null)
             {
-                return NotFound(new { message = "Không tìm thấy với staffId này." });
+                return BadRequest(new { message = "Nhân viên không tồn tại." });
             }
-                hh.Username = username;
-                hh.Password = password;
-                hh.FullName = name;
-                hh.Role = role;
+
+            existingStaff.Username = updateStaff.Username;
+            existingStaff.FullName = updateStaff.FullName;
+            existingStaff.Password = updateStaff.Password;
+            existingStaff.Role = updateStaff.Role;
+
+
             dbc.SaveChanges();
 
-            return Ok(new { data = dbc.staff.ToList() });
+            return Ok(new { data = dbc.Customers.ToList() });
         }
         [HttpPost]
         [Route("/Staff/Login")]
