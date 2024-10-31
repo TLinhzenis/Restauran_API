@@ -47,11 +47,11 @@ namespace Restauran_API.Controllers
         [Route("/Staff/Insert")]
         public IActionResult Them([FromBody] staff newStaff)
         {
-            var existingStaff = dbc.staff.FirstOrDefault(m => m.StaffId == newStaff.StaffId);
+            var existingStaff = dbc.staff.FirstOrDefault(m => m.Username == newStaff.Username);
             if (existingStaff != null)
             {
                 // Trả về mã lỗi và thông báo rằng món ăn đã tồn tại
-                return BadRequest(new { message = "Nhân viên đã tồn tại." });
+                return BadRequest(new { message = "Tên tài khoản đã tồn tại." });
             }
 
             dbc.staff.Add(newStaff);
