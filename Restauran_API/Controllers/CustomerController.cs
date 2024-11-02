@@ -127,6 +127,32 @@ namespace Restauran_API.Controllers
             });
         }
 
+        [HttpPut]
+        [Route("/Customer/UpdatePoint")]
+        public IActionResult Sua(string phone, string point)
+        {
+            var existingCustomer = dbc.Customers.FirstOrDefault(m => m.PhoneNumber == phone);
+            if (existingCustomer == null)
+            {
+                return BadRequest(new { message = "Customer không tồn tại." });
+            }
+
+            if (int.TryParse(point, out int parsedPoint))
+            {
+                existingCustomer.Point = parsedPoint;
+            }
+            else
+            {
+                return BadRequest(new { message = "Điểm không hợp lệ." });
+            }
+
+            dbc.SaveChanges();
+
+            return Ok(existingCustomer);
+        }
+
+
+
 
     }
 }

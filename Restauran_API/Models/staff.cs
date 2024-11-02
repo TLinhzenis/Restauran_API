@@ -25,6 +25,7 @@ namespace Restauran_API.Models
         public string? FullName { get; set; }
         [StringLength(50)]
         public string Role { get; set; } = null!;
+        public string? Image { get; set; }
 
         [InverseProperty(nameof(Shift.Staff))]
         public virtual ICollection<Shift> Shifts { get; set; }
