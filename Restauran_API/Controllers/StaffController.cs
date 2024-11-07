@@ -54,7 +54,7 @@ namespace Restauran_API.Controllers
         [Route("/Staff/Insert")]
         public IActionResult Them([FromBody] staff newStaff)
         {
-            var existingStaff = dbc.staff.FirstOrDefault(m => m.Username == newStaff.Username && m.Username != "");
+            var existingStaff = dbc.staff.FirstOrDefault(m => m.Username == newStaff.Username && m.Username != "Unavailable");
             if (existingStaff != null)
             {
                 // Trả về mã lỗi và thông báo rằng món ăn đã tồn tại

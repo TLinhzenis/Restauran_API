@@ -62,8 +62,7 @@ namespace Restauran_API.Controllers
             dbc.SaveChanges();
             return Ok(hh);
         }
-
-
+        
         [HttpPut]
         [Route("/Order/Update")]
         public IActionResult Sua([FromBody] Order o)

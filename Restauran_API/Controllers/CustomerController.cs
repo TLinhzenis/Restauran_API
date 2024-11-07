@@ -129,17 +129,20 @@ namespace Restauran_API.Controllers
 
         [HttpPut]
         [Route("/Customer/UpdatePoint")]
-        public IActionResult Sua(string phone, string point)
+        public IActionResult Sua(string phone, string point, string username)
         {
-            var existingCustomer = dbc.Customers.FirstOrDefault(m => m.PhoneNumber == phone);
-            if (existingCustomer == null)
+            var customers = dbc.Customers.Where(m => m.PhoneNumber == phone && m.Username == username ).ToList();
+            if (customers.Count == 0)
             {
                 return BadRequest(new { message = "Customer không tồn tại." });
             }
 
             if (int.TryParse(point, out int parsedPoint))
             {
-                existingCustomer.Point = parsedPoint;
+                foreach (var customer in customers)
+                {
+                    customer.Point = parsedPoint;
+                }
             }
             else
             {
@@ -148,8 +151,9 @@ namespace Restauran_API.Controllers
 
             dbc.SaveChanges();
 
-            return Ok(existingCustomer);
+            return Ok(customers);
         }
+
 
 
 

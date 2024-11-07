@@ -35,18 +35,18 @@ namespace Restauran_API.Controllers
         }
         [HttpPost]
         [Route("/Reservation/Insert")]
-        public IActionResult Them(int customerid, int tableid, string status, DateTime ReservationTime)
+        public IActionResult Them([FromBody] Reservation newReservation)
         {
-            Reservation hh = new Reservation
+            var existingReservation = dbc.Reservations.FirstOrDefault(m => m.ReservationId == newReservation.ReservationId);
+            if (existingReservation != null)
             {
-                CustomerId = customerid,
-                TableId = tableid,
-                ReservationTime = ReservationTime,
-                Status = status
+                return BadRequest(new { message = "Tài khoản đã tồn tại." });
+            }
 
-            };
+            newReservation.Status = "waiting"; // Thiết lập mặc định cho Point
+           
 
-            dbc.Reservations.Add(hh);
+            dbc.Reservations.Add(newReservation);
             dbc.SaveChanges();
 
             return Ok(new { data = dbc.Reservations.ToList() });
@@ -72,5 +72,26 @@ namespace Restauran_API.Controllers
 
             return Ok(new { data = dbc.Reservations.ToList() });
         }
+        [HttpGet]
+        [Route("/Reservation/AvailableTables")]
+        public IActionResult GetAvailableTables(DateTime reservationDateTime)
+        {
+            // Lấy tất cả các bàn có trạng thái "Available"
+            var availableTables = dbc.Tables.Where(t => t.Status == "Available").ToList();
+
+            // Lấy các bàn đã đặt ở thời điểm cụ thể
+            var reservedTables = dbc.Reservations
+                                    .Where(r => r.ReservationTime == reservationDateTime)
+                                    .Select(r => r.TableId)
+                                    .ToList();
+
+            // Loại bỏ các bàn đã đặt từ danh sách các bàn "Available"
+            var filteredTables = availableTables
+                                  .Where(t => !reservedTables.Contains(t.TableId))
+                                  .ToList();
+
+            return Ok(filteredTables);
+        }
+
     }
 }
