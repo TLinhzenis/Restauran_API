@@ -147,6 +147,30 @@ namespace Restauran_API.Controllers
 
             return Ok(result);
         }
+        [HttpGet]
+        [Route("/Menu/GetAllOrderByQuantity")]
+        public async Task<ActionResult<List<MenuItemDTO>>> GetAllOrderByQuantity()
+        {
+            var menuItems = await dbc.MenuItems.ToListAsync();
+            var orderItems = await dbc.OrderItems
+                .GroupBy(oi => oi.MenuItemId)
+                .Select(group => new
+                {
+                    MenuItemID = group.Key,
+                    TotalQuantity = group.Sum(oi => oi.Quantity)
+                })
+                .ToDictionaryAsync(x => x.MenuItemID, x => x.TotalQuantity);
+
+            var result = menuItems.Select(menuItem => new MenuItemDTO
+            {
+                MenuItemID = menuItem.MenuItemId,
+                ItemName = menuItem.ItemName,
+                TotalQuantity = orderItems.ContainsKey(menuItem.MenuItemId) ? orderItems[menuItem.MenuItemId] : 0,
+                Image = menuItem.Image,
+            }).ToList();
+
+            return Ok(result);
+        }
 
     }
 }
