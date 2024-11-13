@@ -20,18 +20,63 @@ namespace Restauran_API.Controllers
 
 
         [HttpGet]
-        [Route("/Statistics/TodayRevenue")]
-        public async Task<IActionResult> GetTodayRevenue()
+        [Route("/Statistics/Revenue")]
+        public async Task<IActionResult> GetRevenue()
         {
             var today = DateTime.Today;
 
-            // Tính tổng doanh thu cho ngày hôm nay từ bảng Orders
-            var totalRevenue = await dbc.Orders
-                .Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Date == today)
+            // Tính tổng doanh thu cho 7 ngày gần nhất
+            var sevenDaysAgo = today.AddDays(-6);
+            var revenueLast7Days = await dbc.Orders
+                .Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Date >= sevenDaysAgo && order.OrderTime.Value.Date <= today)
                 .SumAsync(order => order.TotalAmount ?? 0);
 
-            return Ok(new { Date = today, TotalRevenue = totalRevenue });
+            // Tính tổng doanh thu cho 30 ngày gần nhất
+            var thirtyDaysAgo = today.AddDays(-29);
+            var revenueLast30Days = await dbc.Orders
+                .Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Date >= thirtyDaysAgo && order.OrderTime.Value.Date <= today)
+                .SumAsync(order => order.TotalAmount ?? 0);
+
+            return Ok(new
+            {
+                Today = new { Date = today, TotalRevenue = revenueLast7Days },
+                Last7Days = new { StartDate = sevenDaysAgo, EndDate = today, TotalRevenue = revenueLast7Days },
+                Last30Days = new { StartDate = thirtyDaysAgo, EndDate = today, TotalRevenue = revenueLast30Days }
+            });
         }
+
+        [HttpGet]
+        [Route("/Statistics/OrderCount")]
+        public async Task<IActionResult> GetOrderCount()
+        {
+            var today = DateTime.Today;
+
+            // Đếm số lượng đơn hàng cho ngày hôm nay
+            var todayOrderCount = await dbc.Orders
+                .Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Date == today)
+                .CountAsync();
+
+            // Đếm số lượng đơn hàng cho 7 ngày gần nhất
+            var sevenDaysAgo = today.AddDays(-6);
+            var last7DaysOrderCount = await dbc.Orders
+                .Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Date >= sevenDaysAgo && order.OrderTime.Value.Date <= today)
+                .CountAsync();
+
+            // Đếm số lượng đơn hàng cho 30 ngày gần nhất
+            var thirtyDaysAgo = today.AddDays(-29);
+            var last30DaysOrderCount = await dbc.Orders
+                .Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Date >= thirtyDaysAgo && order.OrderTime.Value.Date <= today)
+                .CountAsync();
+
+            return Ok(new
+            {
+                Today = new { Date = today, OrderCount = todayOrderCount },
+                Last7Days = new { StartDate = sevenDaysAgo, EndDate = today, OrderCount = last7DaysOrderCount },
+                Last30Days = new { StartDate = thirtyDaysAgo, EndDate = today, OrderCount = last30DaysOrderCount }
+            });
+        }
+
+
 
         [HttpGet]
         [Route("/Statistics/YearlyRevenue")]
