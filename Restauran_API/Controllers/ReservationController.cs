@@ -92,6 +92,37 @@ namespace Restauran_API.Controllers
 
             return Ok(filteredTables);
         }
+        [HttpGet]
+        [Route("/Reservation/ActiveReservations")]
+        public IActionResult GetActiveReservations()
+        {
+            var currentTime = DateTime.Now;
+            var currentDate = currentTime.Date; // Lấy ngày hiện tại mà không có giờ
+
+            // Lọc các Reservation có thời gian lớn hơn hiện tại và cùng ngày
+            var activeReservations = dbc.Reservations
+                .Where(r => r.ReservationTime.HasValue && r.ReservationTime.Value > currentTime && r.ReservationTime.Value.Date == currentDate)
+                .ToList();
+
+            // Lọc các Reservation có thời gian bé hơn hiện tại và cập nhật trạng thái thành "overtime"
+            var overdueReservations = dbc.Reservations
+                .Where(r => r.ReservationTime.HasValue && r.ReservationTime.Value <= currentTime && r.Status != "overtime")
+                .ToList();
+
+            foreach (var reservation in overdueReservations)
+            {
+                reservation.Status = "overtime"; // Cập nhật trạng thái thành "overtime"
+            }
+
+            dbc.SaveChanges(); // Lưu thay đổi vào cơ sở dữ liệu
+
+            return Ok(new
+            {
+                activeReservations = activeReservations, // Trả về các Reservation còn hiệu lực
+                updatedReservations = overdueReservations // Trả về các Reservation đã được cập nhật trạng thái
+            });
+        }
+
 
     }
 }
