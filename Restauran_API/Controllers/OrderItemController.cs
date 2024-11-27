@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Restauran_API.Models;
 
 namespace Restauran_API.Controllers
@@ -42,8 +41,8 @@ namespace Restauran_API.Controllers
                 MenuItemId = orderItem.MenuItemId,
                 Quantity = orderItem.Quantity,
                 Price = (decimal)orderItem.Price,
-                Note = orderItem.Note
-
+                Note = orderItem.Note,
+                Status = orderItem.Status,
             };
 
             dbc.OrderItems.Add(hh);
@@ -56,7 +55,7 @@ namespace Restauran_API.Controllers
 
         [HttpPut]
         [Route("/OrderItem/Update")]
-        public IActionResult Sua(int OrderItemId, int orderid, int menuitemid, int quantity, decimal price, string note)
+        public IActionResult Sua(int OrderItemId, string orderStatus)
         {
             var hh = dbc.OrderItems.FirstOrDefault(c => c.OrderItemId == OrderItemId);
 
@@ -64,11 +63,8 @@ namespace Restauran_API.Controllers
             {
                 return NotFound(new { message = "Không tìm thấy với OrderItemId này." });
             }
-                hh.OrderId = orderid;
-                hh.MenuItemId = menuitemid;
-                hh.Quantity = quantity;
-                hh.Price = price;
-                hh.Note = note;
+            hh.Status = orderStatus;
+            dbc.Update(hh);
             dbc.SaveChanges();
 
             return Ok(new { data = dbc.OrderItems.ToList() });

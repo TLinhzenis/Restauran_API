@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace Restauran_API.Models
 {
@@ -20,6 +17,8 @@ namespace Restauran_API.Models
         public decimal Price { get; set; }
         [StringLength(500)]
         public string? Note { get; set; }
+        [StringLength(100)]
+        public string? Status { get; set; }
 
         [ForeignKey(nameof(MenuItemId))]
         [InverseProperty("OrderItems")]
