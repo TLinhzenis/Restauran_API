@@ -73,5 +73,19 @@ namespace Restauran_API.Controllers
 
             return Ok(new { data = dbc.OrderItems.ToList() });
         }
+        [HttpGet]
+        [Route("/OrderItem/ListByOrderId/{orderId}")]
+        public IActionResult GetListByOrderId(int orderId)
+        {
+            var orderItems = dbc.OrderItems.Where(oi => oi.OrderId == orderId).ToList();
+
+            if (orderItems == null || !orderItems.Any())
+            {
+                return NotFound(new { message = "Không tìm thấy OrderItem cho OrderId này." });
+            }
+
+            return Ok(orderItems);
+        }
+
     }
 }
