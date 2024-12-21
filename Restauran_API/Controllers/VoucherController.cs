@@ -93,6 +93,60 @@ namespace Restauran_API.Controllers
 
             return Ok(vc);
         }
+        [HttpPost]
+        [Route("/Voucher/Buy")]
+        public IActionResult MuaVoucher(int customerId, int voucherId, int quantity)
+        {
+            var customer = dbc.Customers.FirstOrDefault(c => c.CustomerId == customerId);
+            if (customer == null)
+            {
+                return NotFound(new { message = "Không tìm thấy khách hàng với ID này." });
+            }
+
+            var voucher = dbc.Vouchers.FirstOrDefault(v => v.VoucherId == voucherId);
+            if (voucher == null)
+            {
+                return NotFound(new { message = "Không tìm thấy voucher với ID này." });
+            }
+
+            int totalPointsRequired = (voucher.VoucherPoint ?? 0) * quantity;
+
+            if (customer.Point < totalPointsRequired)
+            {
+                return BadRequest(new { message = "Điểm không đủ để mua voucher." });
+            }
+
+            customer.Point -= totalPointsRequired;
+
+            var existingVoucherWallet = dbc.VoucherWallets
+                .FirstOrDefault(vw => vw.CustomerId == customerId && vw.VoucherId == voucherId);
+
+            if (existingVoucherWallet != null)
+            {
+                existingVoucherWallet.Quantity += quantity;
+            }
+            else
+            {
+                var newVoucherWallet = new VoucherWallet
+                {
+                    CustomerId = customerId,
+                    VoucherId = voucherId,
+                    Quantity = quantity
+                };
+                dbc.VoucherWallets.Add(newVoucherWallet);
+            }
+
+            dbc.SaveChanges();
+
+            return Ok(new
+            {
+                message = "Mua voucher thành công.",
+                customerPoints = customer.Point,
+                voucherWallet = dbc.VoucherWallets
+                    .Where(vw => vw.CustomerId == customerId)
+                    .ToList()
+            });
+        }
 
     }
 }
