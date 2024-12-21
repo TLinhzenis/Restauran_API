@@ -93,59 +93,63 @@ namespace Restauran_API.Controllers
 
             return Ok(vc);
         }
+        public class BuyVoucherRequest
+        {
+            public int CustomerId { get; set; }
+            public int VoucherId { get; set; }
+            public int VoucherPrice { get; set; }
+        }
         [HttpPost]
         [Route("/Voucher/Buy")]
-        public IActionResult MuaVoucher(int customerId, int voucherId, int quantity)
+        public IActionResult BuyVoucher([FromBody] BuyVoucherRequest request)
         {
-            var customer = dbc.Customers.FirstOrDefault(c => c.CustomerId == customerId);
+            // Lấy thông tin khách hàng từ database
+            var customer = dbc.Customers.FirstOrDefault(c => c.CustomerId == request.CustomerId);
             if (customer == null)
             {
-                return NotFound(new { message = "Không tìm thấy khách hàng với ID này." });
+                return BadRequest(new { message = "Khách hàng không tồn tại" });
             }
 
-            var voucher = dbc.Vouchers.FirstOrDefault(v => v.VoucherId == voucherId);
+            // Kiểm tra đủ điểm không
+            if (customer.Point < request.VoucherPrice)
+            {
+                return BadRequest(new { message = "Bạn không đủ điểm để mua voucher" });
+            }
+
+            // Trừ điểm của khách hàng
+            customer.Point -= request.VoucherPrice;
+            dbc.SaveChanges();
+
+            // Kiểm tra voucher có trong database không
+            var voucher = dbc.Vouchers.FirstOrDefault(v => v.VoucherId == request.VoucherId);
             if (voucher == null)
             {
-                return NotFound(new { message = "Không tìm thấy voucher với ID này." });
+                return BadRequest(new { message = "Voucher không tồn tại" });
             }
 
-            int totalPointsRequired = (voucher.VoucherPoint ?? 0) * quantity;
-
-            if (customer.Point < totalPointsRequired)
+            // Kiểm tra xem voucher đó đã có trong VoucherWallet chưa
+            var voucherWallet = dbc.VoucherWallets.FirstOrDefault(vw => vw.CustomerId == request.CustomerId && vw.VoucherId == request.VoucherId);
+            if (voucherWallet != null)
             {
-                return BadRequest(new { message = "Điểm không đủ để mua voucher." });
-            }
-
-            customer.Point -= totalPointsRequired;
-
-            var existingVoucherWallet = dbc.VoucherWallets
-                .FirstOrDefault(vw => vw.CustomerId == customerId && vw.VoucherId == voucherId);
-
-            if (existingVoucherWallet != null)
-            {
-                existingVoucherWallet.Quantity += quantity;
+                // Nếu đã có voucher trong Wallet, tăng quantity
+                voucherWallet.Quantity += 1;
             }
             else
             {
+                // Nếu chưa có voucher trong Wallet, thêm mới vào
                 var newVoucherWallet = new VoucherWallet
                 {
-                    CustomerId = customerId,
-                    VoucherId = voucherId,
-                    Quantity = quantity
+                    CustomerId = request.CustomerId,
+                    VoucherId = request.VoucherId,
+                    Quantity = 1
                 };
                 dbc.VoucherWallets.Add(newVoucherWallet);
             }
 
+            // Lưu lại các thay đổi
             dbc.SaveChanges();
 
-            return Ok(new
-            {
-                message = "Mua voucher thành công.",
-                customerPoints = customer.Point,
-                voucherWallet = dbc.VoucherWallets
-                    .Where(vw => vw.CustomerId == customerId)
-                    .ToList()
-            });
+            return Ok(new { message = "Mua voucher thành công", pointsRemaining = customer.Point });
         }
 
     }
