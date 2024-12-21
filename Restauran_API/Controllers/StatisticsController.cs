@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Restauran_API.Models;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Restauran_API.Controllers
 {
@@ -76,7 +73,23 @@ namespace Restauran_API.Controllers
             });
         }
 
+        [HttpGet]
+        [Route("/Statistics/Top3Customer")]
+        public async Task<IActionResult> GetTop3Customer()
+        {
+            var topCustomers = await dbc.Customers
+            .Select(c => new
+            {
+                FullName = c.FullName,
+                TotalSpent = c.Orders.Sum(o => o.TotalAmount),
+                TotalOrders = c.Orders.Count()
+            })
+            .OrderByDescending(c => c.TotalSpent)
+            .Take(3)
+            .ToListAsync();
 
+            return Ok(topCustomers);
+        }
 
         [HttpGet]
         [Route("/Statistics/YearlyRevenue")]

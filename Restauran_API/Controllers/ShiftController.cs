@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Restauran_API.Models;
 
 namespace Restauran_API.Controllers
@@ -34,27 +33,25 @@ namespace Restauran_API.Controllers
         }
         [HttpPost]
         [Route("/Shift/Insert")]
-        public IActionResult Them(int staffid, DateTime endtime, DateTime starttime)
+        public IActionResult Them(int staffid, DateTime starttime)
         {
             Shift hh = new Shift
             {
                 StaffId = staffid,
                 StartTime = starttime,
-                EndTime = endtime
-
             };
 
             dbc.Shifts.Add(hh);
             dbc.SaveChanges();
 
-            return Ok(new { data = dbc.Shifts.ToList() });
+            return Ok(hh);
         }
 
 
 
         [HttpPut]
-        [Route("/Shift/Update")]
-        public IActionResult Sua(int ShiftId, int staffid, DateTime endtime, DateTime starttime)
+        [Route("/Shift/UpdateEndTime")]
+        public IActionResult Sua(int ShiftId, DateTime endtime)
         {
             var hh = dbc.Shifts.FirstOrDefault(c => c.ShiftId == ShiftId);
 
@@ -62,12 +59,10 @@ namespace Restauran_API.Controllers
             {
                 return NotFound(new { message = "Không tìm thấy với ShiftId này." });
             }
-                hh.StaffId = staffid;
-                hh.StartTime = starttime;
-                hh.EndTime = endtime;
+            hh.EndTime = endtime;
             dbc.SaveChanges();
 
-            return Ok(new { data = dbc.Shifts.ToList() });
+            return Ok(hh);
         }
     }
 }
