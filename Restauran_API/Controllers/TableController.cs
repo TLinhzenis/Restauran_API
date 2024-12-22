@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Restauran_API.Models;
 
@@ -55,7 +54,7 @@ namespace Restauran_API.Controllers
                 TableNumber = tableNumber,
                 Status = status,
                 Capacity = capacity,
-                Username = username, 
+                Username = username,
                 Password = password
 
             };
@@ -91,7 +90,7 @@ namespace Restauran_API.Controllers
 
         [HttpPut]
         [Route("/Table/UpdateStatus")]
-        public IActionResult Sua( int tableID, string status)
+        public IActionResult Sua(int tableID, string status)
         {
             var existingTable = dbc.Tables.FirstOrDefault(m => m.TableId == tableID);
             if (existingTable == null)

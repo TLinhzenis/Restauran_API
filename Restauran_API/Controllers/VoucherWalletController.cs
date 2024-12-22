@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Restauran_API.Models;
 
 namespace Restauran_API.Controllers
@@ -38,7 +37,7 @@ namespace Restauran_API.Controllers
         {
             VoucherWallet hh = new VoucherWallet
             {
-                VoucherId= voucherid,
+                VoucherId = voucherid,
                 CustomerId = customerid,
                 Quantity = quantity
 
@@ -54,17 +53,17 @@ namespace Restauran_API.Controllers
 
         [HttpPut]
         [Route("/VoucherWallet/Update")]
-        public IActionResult Sua(int VoucherWalletId, int voucherid, int customerid, int quantity)
+        public IActionResult Sua(int voucherid, int customerid, int quantity)
         {
-            var hh = dbc.VoucherWallets.FirstOrDefault(c => c.VoucherWalletId == VoucherWalletId);
+            var hh = dbc.VoucherWallets.FirstOrDefault(c => c.CustomerId == customerid);
 
             if (hh == null)
             {
                 return NotFound(new { message = "Không tìm thấy với VoucherWalletId này." });
             }
-                hh.VoucherId = voucherid;
-                hh.CustomerId = customerid;
-                hh.Quantity = quantity;
+            hh.VoucherId = voucherid;
+            hh.CustomerId = customerid;
+            hh.Quantity = quantity;
             dbc.SaveChanges();
 
             return Ok(new { data = dbc.VoucherWallets.ToList() });
