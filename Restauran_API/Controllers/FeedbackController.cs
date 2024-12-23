@@ -17,8 +17,26 @@ namespace Restauran_API.Controllers
         [Route("/Feedback/List")]
         public IActionResult GetList()
         {
-            return Ok(dbc.Feedbacks.ToList());
+            var topFeedbacks = dbc.Feedbacks
+        .OrderByDescending(f => f.SubmittedAt)
+        .Take(3)
+        .ToList();
+
+            return Ok(topFeedbacks);
         }
+        [HttpGet]
+        [Route("/Feedback/ListByRating")]
+        public IActionResult GetListByRating(int rating)
+        {
+            var feedbacks = dbc.Feedbacks
+                .Where(f => f.Rating == rating) // Lọc theo rating
+                .OrderByDescending(f => f.SubmittedAt) // Sắp xếp theo ngày gửi
+                .Take(3) // Lấy 3 feedback mới nhất
+                .ToList();
+
+            return Ok(feedbacks);
+        }
+
         [HttpPost]
         [Route("/Feedback/Delete")]
         public IActionResult Xoa(int id)
@@ -34,18 +52,15 @@ namespace Restauran_API.Controllers
         }
         [HttpPost]
         [Route("/Feedback/Insert")]
-        public IActionResult Them(int customerid, int rating, string comment, DateTime SubmittedAt)
+        public IActionResult Them([FromBody] Feedback newFeedback)
         {
-            Feedback hh = new Feedback
+            var existingFeedback = dbc.Feedbacks.FirstOrDefault(m => m.FeedbackId == newFeedback.FeedbackId);
+            if (existingFeedback != null)
             {
-                CustomerId = customerid,
-                Rating = rating,
-                Comment = comment,
-                SubmittedAt = SubmittedAt
-                
-            };
-
-            dbc.Feedbacks.Add(hh);
+                // Trả về mã lỗi và thông báo rằng món ăn đã tồn tại
+                return BadRequest(new { message = "Feedbacks đã tồn tại." });
+            }
+            dbc.Feedbacks.Add(newFeedback);
             dbc.SaveChanges();
 
             return Ok(new { data = dbc.Feedbacks.ToList() });

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Restauran_API.Models;
 
 namespace Restauran_API.Controllers
@@ -23,15 +24,23 @@ namespace Restauran_API.Controllers
         [Route("/Supplier/Delete")]
         public IActionResult Xoa(int id)
         {
-            var vc = dbc.Suppliers.FirstOrDefault(v => v.SupplierId == id);
-            if (vc == null)
+            var supplier = dbc.Suppliers.Include(s => s.Inventories).FirstOrDefault(s => s.SupplierId == id);
+            if (supplier == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Nhà cung cấp không tồn tại." });
             }
-            dbc.Suppliers.Remove(vc);
+
+            if (supplier.Inventories.Any())
+            {
+                return BadRequest(new { message = "Mặt hàng từ nhà cung cấp này còn trong kho." });
+            }
+
+            dbc.Suppliers.Remove(supplier);
             dbc.SaveChanges();
-            return Ok(dbc.Suppliers.ToList());
+
+            return Ok(new { message = "Nhà cung cấp đã được xóa thành công!" });
         }
+
         [HttpPost]
         [Route("/Supplier/Insert")]
         public IActionResult Them([FromBody] Supplier newSupplier)
