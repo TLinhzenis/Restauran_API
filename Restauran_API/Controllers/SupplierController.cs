@@ -34,16 +34,15 @@ namespace Restauran_API.Controllers
         }
         [HttpPost]
         [Route("/Supplier/Insert")]
-        public IActionResult Them(string supplierName, string ContactInfo)
+        public IActionResult Them([FromBody] Supplier newSupplier)
         {
-            Supplier hh = new Supplier
+            var existingSupplier = dbc.Suppliers.FirstOrDefault(m => m.SupplierId == newSupplier.SupplierId);
+            if (existingSupplier != null)
             {
-                SupplierName = supplierName,
-                ContactInfo = ContactInfo
-
-            };
-
-            dbc.Suppliers.Add(hh);
+                // Trả về mã lỗi và thông báo rằng món ăn đã tồn tại
+                return BadRequest(new { message = "Suppliers đã tồn tại." });
+            }
+            dbc.Suppliers.Add(newSupplier);
             dbc.SaveChanges();
 
             return Ok(new { data = dbc.Suppliers.ToList() });
@@ -53,19 +52,32 @@ namespace Restauran_API.Controllers
 
         [HttpPut]
         [Route("/Supplier/Update")]
-        public IActionResult Sua(int SupplierId, string supplierName, string ContactInfo)
+        public IActionResult Sua([FromBody] Supplier updateSupplier)
         {
-            var hh = dbc.Suppliers.FirstOrDefault(c => c.SupplierId == SupplierId);
-
-            if (hh == null)
+            var existingSupplier = dbc.Suppliers.FirstOrDefault(m => m.SupplierId == updateSupplier.SupplierId);
+            if (existingSupplier == null)
             {
-                return NotFound(new { message = "Không tìm thấy với SupplierId này." });
+                return BadRequest(new { message = "Voucher không tồn tại." });
             }
-                hh.SupplierName = supplierName;
-                hh.ContactInfo = ContactInfo;
+
+            existingSupplier.SupplierName = updateSupplier.SupplierName;
+            existingSupplier.ContactInfo = updateSupplier.ContactInfo;
+
             dbc.SaveChanges();
 
             return Ok(new { data = dbc.Suppliers.ToList() });
+        }
+        [HttpGet]
+        [Route("/Supplier/GetById")]
+        public IActionResult GetById(int id)
+        {
+            var vc = dbc.Suppliers.FirstOrDefault(m => m.SupplierId == id);
+            if (vc == null)
+            {
+                return NotFound(new { message = "Không tìm thấy với SupplierId này." });
+            }
+
+            return Ok(vc);
         }
     }
 }

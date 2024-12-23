@@ -64,5 +64,51 @@ namespace Restauran_API.Controllers
 
             return Ok(hh);
         }
+        [HttpGet]
+        [Route("/Shift/MonthlyData")]
+        public IActionResult GetMonthlyData(int month)
+        {
+            // Lọc danh sách các ca làm việc với StartTime hợp lệ và thuộc tháng cần tìm
+            var shifts = dbc.Shifts
+                .Where(s => s.StartTime.HasValue && s.StartTime.Value.Month == month)
+                .ToList();
+
+            // Lấy danh sách nhân viên
+            var staffList = dbc.staff.ToList();
+
+            // Tính toán số ngày làm việc và lương cho từng nhân viên
+            var result = staffList.Select(staff => new
+            {
+                StaffId = staff.StaffId,
+                FullName = staff.FullName,
+                WorkDays = shifts
+                    .Where(s => s.StaffId == staff.StaffId)
+                    .Select(s => s.StartTime.Value.Day) // Dùng Value để truy cập DateTime
+                    .Distinct()
+                    .Count(),
+                Salary = shifts
+                    .Where(s => s.StaffId == staff.StaffId)
+                    .Select(s => s.StartTime.Value.Day) // Dùng Value để truy cập DateTime
+                    .Distinct()
+                    .Count() * 300000 // Mỗi ngày làm việc được tính 300000
+            });
+
+            return Ok(result);
+        }
+        [HttpGet]
+        [Route("/Shift/WorkDays")]
+        public IActionResult GetWorkDays(int staffId, int month)
+        {
+            var workDays = dbc.Shifts
+                .Where(s => s.StaffId == staffId && s.StartTime.HasValue && s.StartTime.Value.Month == month)
+                .Select(s => s.StartTime.Value.Day)
+                .Distinct()
+                .ToList();
+
+
+
+            return Ok(workDays);
+        }
+
     }
 }
