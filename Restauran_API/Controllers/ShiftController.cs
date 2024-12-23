@@ -99,16 +99,35 @@ namespace Restauran_API.Controllers
         [Route("/Shift/WorkDays")]
         public IActionResult GetWorkDays(int staffId, int month)
         {
+            // Lấy danh sách ngày làm việc của nhân viên
             var workDays = dbc.Shifts
                 .Where(s => s.StaffId == staffId && s.StartTime.HasValue && s.StartTime.Value.Month == month)
                 .Select(s => s.StartTime.Value.Day)
                 .Distinct()
                 .ToList();
 
+            // Lấy tên nhân viên tương ứng với staffId
+            var staffName = dbc.staff
+                .Where(staff => staff.StaffId == staffId)
+                .Select(staff => staff.FullName) // Giả sử trường tên nhân viên là FullName
+                .FirstOrDefault();
 
+            // Kiểm tra nếu không tìm thấy nhân viên
+            if (staffName == null)
+            {
+                return NotFound("Nhân viên không tồn tại.");
+            }
 
-            return Ok(workDays);
+            // Trả về kết quả bao gồm cả tên nhân viên và danh sách ngày làm việc
+            var result = new
+            {
+                StaffName = staffName,
+                WorkDays = workDays
+            };
+
+            return Ok(result);
         }
+
 
     }
 }
