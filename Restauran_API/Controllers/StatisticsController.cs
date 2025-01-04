@@ -21,7 +21,7 @@ namespace Restauran_API.Controllers
         public async Task<IActionResult> GetRevenue()
         {
             var today = DateTime.Today;
-
+            var revenueToday = await dbc.Orders.Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Date.Day == today.Day).SumAsync(order => order.TotalAmount ?? 0);
             // Tính tổng doanh thu cho 7 ngày gần nhất
             var sevenDaysAgo = today.AddDays(-6);
             var revenueLast7Days = await dbc.Orders
@@ -36,7 +36,7 @@ namespace Restauran_API.Controllers
 
             return Ok(new
             {
-                Today = new { Date = today, TotalRevenue = revenueLast7Days },
+                Today = new { Date = today, TotalRevenue = revenueToday },
                 Last7Days = new { StartDate = sevenDaysAgo, EndDate = today, TotalRevenue = revenueLast7Days },
                 Last30Days = new { StartDate = thirtyDaysAgo, EndDate = today, TotalRevenue = revenueLast30Days }
             });
@@ -50,7 +50,7 @@ namespace Restauran_API.Controllers
 
             // Đếm số lượng đơn hàng cho ngày hôm nay
             var todayOrderCount = await dbc.Orders
-                .Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Date == today)
+                .Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Date.Day == today.Day)
                 .CountAsync();
 
             // Đếm số lượng đơn hàng cho 7 ngày gần nhất
