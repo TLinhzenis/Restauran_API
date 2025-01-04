@@ -20,7 +20,7 @@ namespace Restauran_API.Controllers
         [Route("/Statistics/Revenue")]
         public async Task<IActionResult> GetRevenue()
         {
-            var today = DateTime.Today;
+            var today = DateTime.Today.AddDays(1);
             var revenueToday = await dbc.Orders.Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Date.Day == today.Day).SumAsync(order => order.TotalAmount ?? 0);
             // Tính tổng doanh thu cho 7 ngày gần nhất
             var sevenDaysAgo = today.AddDays(-6);
@@ -46,7 +46,7 @@ namespace Restauran_API.Controllers
         [Route("/Statistics/OrderCount")]
         public async Task<IActionResult> GetOrderCount()
         {
-            var today = DateTime.Today;
+            var today = DateTime.Today.AddDays(1);
 
             // Đếm số lượng đơn hàng cho ngày hôm nay
             var todayOrderCount = await dbc.Orders
