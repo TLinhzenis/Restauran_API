@@ -129,6 +129,47 @@ namespace Restauran_API.Controllers
 
             return Ok(monthlyRevenue); // Trả về dữ liệu
         }
+        [HttpGet]
+        [Route("/Statistics/CurrentMonthDailyRevenue")]
+        public async Task<IActionResult> GetCurrentMonthDailyRevenue()
+        {
+            var currentDate = DateTime.Now;
+            var startOfMonth = new DateTime(currentDate.Year, currentDate.Month, 1); // Ngày đầu tiên của tháng
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1); // Ngày cuối cùng của tháng
+
+            // Tính doanh thu từng ngày trong tháng hiện tại
+            var query = await dbc.Orders
+                .Where(order => order.OrderTime.HasValue
+                                && order.OrderTime.Value >= startOfMonth
+                                && order.OrderTime.Value <= endOfMonth) // Lọc trong tháng hiện tại
+                .GroupBy(order => new
+                {
+                    Date = order.OrderTime.Value.Date // Nhóm theo ngày
+                })
+                .Select(group => new
+                {
+                    Date = group.Key.Date, // Ngày
+                    Revenue = group.Sum(order => order.TotalAmount ?? 0) // Tổng doanh thu trong ngày
+                })
+                .ToListAsync();
+
+            // Đảm bảo danh sách trả về đầy đủ các ngày, kể cả ngày không có doanh thu
+            var dailyRevenue = Enumerable.Range(0, (endOfMonth - startOfMonth).Days + 1)
+                .Select(offset => new
+                {
+                    Date = startOfMonth.AddDays(offset), // Tạo danh sách ngày trong tháng
+                    Revenue = query.FirstOrDefault(q => q.Date == startOfMonth.AddDays(offset))?.Revenue ?? 0
+                })
+                .OrderBy(result => result.Date) // Sắp xếp theo ngày
+                .Select(result => new
+                {
+                    Date = result.Date.ToString("yyyy-MM-dd"), // Định dạng ngày
+                    result.Revenue
+                })
+                .ToList();
+
+            return Ok(dailyRevenue); // Trả về danh sách doanh thu theo ngày
+        }
 
 
 
