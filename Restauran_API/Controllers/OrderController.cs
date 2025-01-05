@@ -96,7 +96,7 @@ namespace Restauran_API.Controllers
             // Trả về danh sách các Order
             return Ok(orders);
         }
-        [HttpGet]
+        [HttpPut]
         [Route("/Order/UpdateCustomerID")]
         public IActionResult UpdateCustomerID(int id, int customerID)
         {

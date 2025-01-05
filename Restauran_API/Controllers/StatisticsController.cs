@@ -95,21 +95,42 @@ namespace Restauran_API.Controllers
         [Route("/Statistics/YearlyRevenue")]
         public async Task<IActionResult> GetYearlyRevenue()
         {
-            var currentYear = DateTime.Now.Year; // Lấy năm hiện tại
+            var currentDate = DateTime.Now;
+            var startDate = currentDate.AddMonths(-11); // Lấy từ tháng hiện tại ngược về 12 tháng
 
-            // Lọc các đơn hàng trong năm hiện tại và nhóm theo tháng
-            var monthlyRevenue = await dbc.Orders
-                .Where(order => order.OrderTime.HasValue && order.OrderTime.Value.Year == currentYear) // Lọc theo năm
-                .GroupBy(order => order.OrderTime.Value.Month) // Nhóm theo tháng
+            // Lọc và nhóm dữ liệu
+            var query = await dbc.Orders
+                .Where(order => order.OrderTime.HasValue
+                                && order.OrderTime.Value >= startDate
+                                && order.OrderTime.Value <= currentDate) // Lọc trong khoảng thời gian
+                .GroupBy(order => new
+                {
+                    Year = order.OrderTime.Value.Year,
+                    Month = order.OrderTime.Value.Month
+                }) // Nhóm theo năm/tháng
                 .Select(group => new
                 {
-                    Month = group.Key, // Tháng
-                    Revenue = group.Sum(order => order.TotalAmount ?? 0) // Tổng doanh thu trong tháng
+                    group.Key.Year,
+                    group.Key.Month,
+                    Revenue = group.Sum(order => order.TotalAmount ?? 0) // Tổng doanh thu
                 })
-                .OrderBy(result => result.Month) // Sắp xếp theo tháng
                 .ToListAsync();
 
-            return Ok(monthlyRevenue); // Trả về doanh thu theo tháng
+            // Xử lý việc chuyển đổi chuỗi trên client
+            var monthlyRevenue = query
+                .AsEnumerable()
+                .Select(result => new
+                {
+                    Month = $"{result.Year}-{result.Month:D2}", // Tạo chuỗi yyyy-MM
+                    result.Revenue
+                })
+                .OrderBy(result => result.Month) // Sắp xếp theo yyyy-MM
+                .ToList();
+
+            return Ok(monthlyRevenue); // Trả về dữ liệu
         }
+
+
+
     }
 }
