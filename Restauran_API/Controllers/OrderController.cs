@@ -1,8 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Restauran_API.Models;
 
 namespace Restauran_API.Controllers
@@ -62,7 +59,7 @@ namespace Restauran_API.Controllers
             dbc.SaveChanges();
             return Ok(hh);
         }
-        
+
         [HttpPut]
         [Route("/Order/Update")]
         public IActionResult Sua([FromBody] Order o)
@@ -98,6 +95,19 @@ namespace Restauran_API.Controllers
 
             // Trả về danh sách các Order
             return Ok(orders);
+        }
+        [HttpGet]
+        [Route("/Order/UpdateCustomerID")]
+        public IActionResult UpdateCustomerID(int id, int customerID)
+        {
+            var hh = dbc.Orders.FirstOrDefault(c => c.OrderId == id);
+            if (hh == null)
+            {
+                return NotFound(new { message = "Error not found." });
+            }
+            hh.CustomerId = customerID;
+            dbc.SaveChanges();
+            return Ok(hh);
         }
 
     }
